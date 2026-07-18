@@ -47,6 +47,11 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "**/*",
+                "input": "lessons-files",
+                "output": "lessons-files"
               }
             ],
             "styles": [

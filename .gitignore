@@ -17,3 +17,7 @@ frontend/.angular/
 .idea/
 Thumbs.db
 .DS_Store
+
+# Carpetas de lecciones locales (PDFs)
+frontend/lessons-files/
+frontend/public/lessons-files/

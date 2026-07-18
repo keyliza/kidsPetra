@@ -1,0 +1,47 @@
+@import 'tailwindcss';
+
+/* ── Tokens de diseño Petra Kids ─────────────────────────────── */
+@theme {
+  --font-display: 'Baloo 2', system-ui, sans-serif;
+  --font-sans: 'Nunito', system-ui, sans-serif;
+
+  --color-brand-50: #fff7ed;
+  --color-brand-100: #ffedd5;
+  --color-brand-400: #fb923c;
+  --color-brand-500: #f97316;
+  --color-brand-600: #ea580c;
+
+  --color-cream: #fffaf3;
+  --color-ink: #3d2c1e;
+
+  --radius-card: 1.75rem;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    font-family: var(--font-sans);
+    color: var(--color-ink);
+    background-color: var(--color-cream);
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, h4, .font-display {
+    font-family: var(--font-display);
+  }
+  /* Foco accesible visible y coherente */
+  :focus-visible {
+    outline: 3px solid var(--color-brand-500);
+    outline-offset: 2px;
+    border-radius: 0.5rem;
+  }
+}
+
+/* Fondos con formas orgánicas suaves */
+.blob-bg {
+  background-image:
+    radial-gradient(60rem 60rem at 110% -10%, #ffedd5 0%, transparent 55%),
+    radial-gradient(50rem 50rem at -10% 10%, #e0f2fe 0%, transparent 50%),
+    radial-gradient(40rem 40rem at 50% 120%, #ede9fe 0%, transparent 55%);
+}

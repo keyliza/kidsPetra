@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/PetraKids.Api/PetraKids.Api.csproj" />
+    <Project Path="src/PetraKids.Application/PetraKids.Application.csproj" />
+    <Project Path="src/PetraKids.Domain/PetraKids.Domain.csproj" />
+    <Project Path="src/PetraKids.Infrastructure/PetraKids.Infrastructure.csproj" />
+  </Folder>
+</Solution>

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, HostListener, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/api';
 import { AgeGroup, Lesson, LessonFile, Section } from '../../core/models';
@@ -29,6 +29,7 @@ export class CatalogComponent {
   selectedSection = signal<number | null>(null);
   viewerTarget = signal<PdfTarget | null>(null);
   sortAsc = signal(true);
+  showScrollTop = signal(false);
 
   private isMobile = matchMedia('(max-width: 767px)');
 
@@ -100,6 +101,16 @@ export class CatalogComponent {
 
   toggleSort(): void {
     this.sortAsc.update((asc) => !asc);
+  }
+
+  @HostListener('window:scroll', [])
+  onWindowScroll(): void {
+    const y = window.scrollY || document.documentElement.scrollTop;
+    this.showScrollTop.set(y > 400);
+  }
+
+  scrollToTop(): void {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   /** Archivos con URL, ordenados por edad, para una lección. */

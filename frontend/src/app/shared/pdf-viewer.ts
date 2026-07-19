@@ -42,7 +42,10 @@ export interface PdfTarget {
             <app-icon name="x" [size]="20" class="hidden sm:block" />
           </button>
         </header>
-        <iframe [src]="safe()" class="w-full flex-1 border-0" [title]="target().title"></iframe>
+        <div class="relative w-full flex-1 min-h-0">
+          <div class="absolute right-0 top-0 z-10 h-12 w-14 bg-transparent pointer-events-auto"></div>
+          <iframe [src]="safe()" class="h-full w-full border-0" [title]="target().title"></iframe>
+        </div>
       </div>
     </div>
   `,

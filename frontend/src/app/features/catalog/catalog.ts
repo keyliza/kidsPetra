@@ -113,10 +113,6 @@ export class CatalogComponent {
     if (url.includes('drive.google.com')) {
       url = url.replace(/\/view(\?.*)?$/, '/preview');
     }
-    if (this.isMobile.matches) {
-      window.open(url, '_blank', 'noopener');
-      return;
-    }
     this.viewerTarget.set({ title: `${lesson.title} · ${file.ageGroupName}`, url });
   }
 

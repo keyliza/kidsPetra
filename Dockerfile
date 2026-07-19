@@ -9,9 +9,6 @@ RUN cd frontend && npm ci --include=dev
 # Copiar el resto del código del frontend
 COPY frontend/ ./frontend/
 
-# Crear carpeta de lecciones vacía para evitar fallos de compilación en Angular
-RUN mkdir -p frontend/lessons-files
-
 # Compilar la aplicación para producción
 RUN cd frontend && npm run build
 

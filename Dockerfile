@@ -1,5 +1,5 @@
 # 1. Etapa de Construcción (Node.js)
-FROM node:20-alpine AS build
+FROM node:22-alpine AS build
 WORKDIR /app
 
 # Copiar archivos de dependencias y hacer caché

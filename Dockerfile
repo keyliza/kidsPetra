@@ -4,13 +4,16 @@ WORKDIR /app
 
 # Copiar archivos de dependencias y hacer caché
 COPY frontend/package*.json ./frontend/
-RUN cd frontend && npm ci
+RUN cd frontend && npm ci --include=dev
 
 # Copiar el resto del código del frontend
 COPY frontend/ ./frontend/
 
+# Crear carpeta de lecciones vacía para evitar fallos de compilación en Angular
+RUN mkdir -p frontend/lessons-files
+
 # Compilar la aplicación para producción
-RUN cd frontend && npm run build -- --configuration=production
+RUN cd frontend && npm run build
 
 # 2. Etapa de Servidor Web (Nginx)
 FROM nginx:alpine

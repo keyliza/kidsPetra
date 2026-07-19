@@ -5,14 +5,14 @@
   --font-display: 'Baloo 2', system-ui, sans-serif;
   --font-sans: 'Nunito', system-ui, sans-serif;
 
-  --color-brand-50: #fff7ed;
-  --color-brand-100: #ffedd5;
-  --color-brand-400: #fb923c;
-  --color-brand-500: #f97316;
-  --color-brand-600: #ea580c;
+  --color-brand-50: #f0f9ff;
+  --color-brand-100: #e0f2fe;
+  --color-brand-400: #38bdf8;
+  --color-brand-500: #0ea5e9;
+  --color-brand-600: #0284c7;
 
-  --color-cream: #fffaf3;
-  --color-ink: #3d2c1e;
+  --color-cream: #fafcfd;
+  --color-ink: #0f172a;
 
   --radius-card: 1.75rem;
 }
@@ -41,7 +41,7 @@
 /* Fondos con formas orgánicas suaves */
 .blob-bg {
   background-image:
-    radial-gradient(60rem 60rem at 110% -10%, #ffedd5 0%, transparent 55%),
-    radial-gradient(50rem 50rem at -10% 10%, #e0f2fe 0%, transparent 50%),
-    radial-gradient(40rem 40rem at 50% 120%, #ede9fe 0%, transparent 55%);
+    radial-gradient(60rem 60rem at 110% -10%, #e0f2fe 0%, transparent 55%),
+    radial-gradient(50rem 50rem at -10% 10%, #f0f9ff 0%, transparent 50%),
+    radial-gradient(40rem 40rem at 50% 120%, #e0f2fe 0%, transparent 55%);
 }

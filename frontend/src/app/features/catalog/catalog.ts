@@ -27,20 +27,26 @@ export class CatalogComponent {
 
   query = signal('');
   selectedSection = signal<number | null>(null);
-  selectedAge = signal<number | null>(null);
   viewerTarget = signal<PdfTarget | null>(null);
+  sortAsc = signal(true);
 
   private isMobile = matchMedia('(max-width: 767px)');
 
   filtered = computed<Lesson[]>(() => {
     const q = normalize(this.query().trim());
     const section = this.selectedSection();
-    const age = this.selectedAge();
-    return this.lessons().filter((l) => {
+    let list = this.lessons().filter((l) => {
       if (section != null && l.sectionId !== section) return false;
-      if (age != null && !l.files.some((f) => f.ageGroupId === age && f.url)) return false;
       if (q && !normalize(l.title).includes(q)) return false;
       return true;
+    });
+
+    const asc = this.sortAsc();
+    return list.slice().sort((a, b) => {
+      if (section == null && a.sectionId !== b.sectionId) {
+        return asc ? a.sectionId - b.sectionId : b.sectionId - a.sectionId;
+      }
+      return asc ? a.number - b.number : b.number - a.number;
     });
   });
 
@@ -87,13 +93,13 @@ export class CatalogComponent {
   toggleSection(id: number): void {
     this.selectedSection.update((cur) => (cur === id ? null : id));
   }
-  toggleAge(id: number): void {
-    this.selectedAge.update((cur) => (cur === id ? null : id));
-  }
   clearFilters(): void {
     this.selectedSection.set(null);
-    this.selectedAge.set(null);
     this.query.set('');
+  }
+
+  toggleSort(): void {
+    this.sortAsc.update((asc) => !asc);
   }
 
   /** Archivos con URL, ordenados por edad, para una lección. */
@@ -103,11 +109,15 @@ export class CatalogComponent {
 
   openFile(lesson: Lesson, file: LessonFile): void {
     if (!file.url) return;
+    let url = file.url;
+    if (url.includes('drive.google.com')) {
+      url = url.replace(/\/view(\?.*)?$/, '/preview');
+    }
     if (this.isMobile.matches) {
-      window.open(file.url, '_blank', 'noopener');
+      window.open(url, '_blank', 'noopener');
       return;
     }
-    this.viewerTarget.set({ title: `${lesson.title} · ${file.ageGroupName}`, url: file.url });
+    this.viewerTarget.set({ title: `${lesson.title} · ${file.ageGroupName}`, url });
   }
 
   shareFile(lesson: Lesson, file: LessonFile, event: MouseEvent): void {

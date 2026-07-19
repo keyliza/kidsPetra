@@ -45,3 +45,24 @@
     radial-gradient(50rem 50rem at -10% 10%, #f0f9ff 0%, transparent 50%),
     radial-gradient(40rem 40rem at 50% 120%, #e0f2fe 0%, transparent 55%);
 }
+
+/* Personalización de la barra de desplazamiento en celeste */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-brand-400) #f1f5f9;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-brand-400);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-brand-500);
+}

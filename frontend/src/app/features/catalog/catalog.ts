@@ -88,6 +88,7 @@ export class CatalogComponent {
           this.viewerTarget.set({ title: `${lesson.title} · ${file.ageGroupName}`, url: file.url! });
         }
       }
+      window.history.replaceState({}, document.title, window.location.pathname);
     }
   }
 
@@ -115,7 +116,10 @@ export class CatalogComponent {
 
   /** Archivos con URL, ordenados por edad, para una lección. */
   availableFiles(lesson: Lesson): LessonFile[] {
-    return lesson.files.filter((f) => f.url);
+    return lesson.files
+      .filter((f) => f.url)
+      .slice()
+      .sort((a, b) => a.ageGroupId - b.ageGroupId);
   }
 
   openFile(lesson: Lesson, file: LessonFile): void {

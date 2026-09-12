@@ -13,6 +13,17 @@ export function embedUrl(url: string): string {
   return id ? `https://drive.google.com/file/d/${id}/preview` : url;
 }
 
+/**
+ * Ruta del proxy propio para leer los bytes del PDF con `fetch`.
+ * No se puede pedir a Drive directamente: responde 403 a las peticiones
+ * cross-site por su cabecera `Sec-Fetch-Site`, que el navegador impone y JS
+ * no puede alterar. Desde nuestro origen viaja como `same-origin` y pasa.
+ */
+export function fetchUrl(url: string): string {
+  const id = driveFileId(url);
+  return id ? `/drive/download?id=${id}&export=download` : url;
+}
+
 /** URL de descarga directa. */
 export function downloadUrl(url: string): string {
   const id = driveFileId(url);

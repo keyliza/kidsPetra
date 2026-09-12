@@ -1,4 +1,9 @@
 {
+  "/drive": {
+    "target": "https://drive.usercontent.google.com",
+    "changeOrigin": true,
+    "pathRewrite": { "^/drive": "" }
+  },
   "/api": {
     "target": "http://localhost:5200",
     "secure": false,

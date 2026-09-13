@@ -3,6 +3,9 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { IconComponent } from './icon';
 import { downloadUrl, embedUrl, fetchUrl } from './pdf-url';
 
+/** Escala de rasterizado: ~144 DPI, suficiente para imprimir sin inflar memoria. */
+const PRINT_SCALE = 2;
+
 export interface PdfTarget {
   title: string;
   url: string;
@@ -97,57 +100,90 @@ export class PdfViewerComponent implements OnDestroy {
 
       const bytes = await res.arrayBuffer();
       // Un proxy mal configurado responde 200 con el index.html del SPA; sin esta
-      // comprobacion el iframe cargaria basura y print() fallaria en silencio.
+      // comprobacion se imprimiria basura y el fallo seria silencioso.
       if (new TextDecoder().decode(bytes.slice(0, 5)) !== '%PDF-') {
         throw new Error('la respuesta no es un PDF');
       }
-      // Drive responde application/octet-stream; hay que re-etiquetar el blob
-      // para que el visor nativo del navegador lo renderice dentro del iframe.
-      const blob = new Blob([bytes], { type: 'application/pdf' });
 
-      if (await this.shareToSystem(blob)) return;
-      this.printViaFrame(blob);
+      if (matchMedia('(pointer: coarse)').matches) {
+        await this.printRasterized(bytes);
+      } else {
+        // Drive responde application/octet-stream; hay que re-etiquetar el blob
+        // para que el visor nativo del navegador lo renderice.
+        this.release();
+        this.blobUrl = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
+        this.printViaFrame();
+      }
     } catch (e) {
       console.error('No se pudo imprimir:', e);
-      this.isPrinting.set(false);
       this.printError.set(true);
+    } finally {
+      this.isPrinting.set(false);
     }
   }
 
   /**
-   * En movil ningun navegador renderiza un PDF dentro de un iframe, asi que
-   * print() no tiene a que apuntar. La via nativa es la hoja de compartir del
-   * sistema, que lleva "Imprimir" entre sus destinos.
-   * Devuelve true si se hizo cargo; false para seguir con el iframe.
+   * Camino movil: ningun navegador de telefono renderiza un PDF dentro de un
+   * iframe, asi que print() no tendria a que apuntar. Se rasterizan las paginas
+   * y se imprime el documento principal, que si acepta print() en movil.
    */
-  private async shareToSystem(blob: Blob): Promise<boolean> {
-    if (!matchMedia('(pointer: coarse)').matches) return false;
+  private async printRasterized(bytes: ArrayBuffer): Promise<void> {
+    const { GlobalWorkerOptions, getDocument } = await import('pdfjs-dist');
+    // El bundler no resuelve el worker desde node_modules: se copia como
+    // asset (ver angular.json) y se referencia por ruta absoluta.
+    GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 
-    const name = this.target().title.replace(/\//g, '-');
-    const file = new File([blob], `${name}.pdf`, { type: 'application/pdf' });
-    if (!navigator.canShare?.({ files: [file] })) return false;
+    const task = getDocument({ data: bytes });
+    const pdf = await task.promise;
+    const host = document.createElement('div');
+    host.id = 'pdf-print';
+    const urls: string[] = [];
+    const loaded: Promise<unknown>[] = [];
 
     try {
-      await navigator.share({ files: [file] });
-    } catch (e) {
-      // La descarga pudo agotar la activacion de usuario que exige share():
-      // en ese caso volvemos al iframe. Si solo cancelo, no hay nada que hacer.
-      if ((e as Error).name !== 'AbortError') return false;
+      for (let n = 1; n <= pdf.numPages; n++) {
+        const page = await pdf.getPage(n);
+        const viewport = page.getViewport({ scale: PRINT_SCALE });
+        const canvas = document.createElement('canvas');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        await page.render({ canvas, canvasContext: canvas.getContext('2d')!, viewport }).promise;
+
+        const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, 'image/jpeg', 0.85));
+        if (!blob) throw new Error(`no se pudo rasterizar la pagina ${n}`);
+        const url = URL.createObjectURL(blob);
+        urls.push(url);
+
+        const img = document.createElement('img');
+        loaded.push(new Promise((r) => { img.onload = img.onerror = r; }));
+        img.src = url;
+        host.appendChild(img);
+
+        // Cada canvas ocupa ~8 MB; liberarlo aqui evita que una leccion de 14
+        // paginas agote la memoria de un telefono de gama baja.
+        canvas.width = canvas.height = 0;
+        page.cleanup();
+      }
+    } finally {
+      task.destroy();
     }
-    this.isPrinting.set(false);
-    return true;
+
+    document.body.appendChild(host);
+    // Sin esperar la carga, print() puede disparar con las imagenes en blanco.
+    await Promise.all(loaded);
+    addEventListener('afterprint', () => {
+      host.remove();
+      urls.forEach(URL.revokeObjectURL);
+    }, { once: true });
+    print();
   }
 
-  private printViaFrame(blob: Blob): void {
-    this.release();
-    this.blobUrl = URL.createObjectURL(blob);
-
+  private printViaFrame(): void {
     const frame = document.createElement('iframe');
     // Invisible pero con layout: con display:none el visor de PDF no carga.
     frame.setAttribute('style', 'position:absolute;width:0;height:0;border:0;visibility:hidden');
-    frame.src = this.blobUrl;
+    frame.src = this.blobUrl!;
     frame.onload = () => {
-      this.isPrinting.set(false);
       try {
         frame.contentWindow!.focus();
         frame.contentWindow!.print();

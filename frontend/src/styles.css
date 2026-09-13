@@ -66,3 +66,30 @@
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-brand-500);
 }
+
+/* ── Impresión de PDF rasterizado (móvil) ────────────────────── */
+/* En móvil ningún navegador renderiza PDFs en un iframe, así que las páginas
+   se rasterizan y se imprime este contenedor en lugar de la app. */
+#pdf-print {
+  display: none;
+}
+
+@media print {
+  body > *:not(#pdf-print) {
+    display: none !important;
+  }
+  #pdf-print {
+    display: block;
+  }
+  #pdf-print img {
+    display: block;
+    width: 100%;
+    break-after: page;
+  }
+  #pdf-print img:last-child {
+    break-after: auto;
+  }
+  @page {
+    margin: 0;
+  }
+}

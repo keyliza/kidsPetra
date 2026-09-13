@@ -85,7 +85,7 @@ export class PdfViewerComponent implements OnDestroy {
   private frame?: HTMLIFrameElement;
   private blobUrl?: string;
 
-  /** Descarga el PDF y lo manda al diálogo de impresión del navegador. */
+  /** Descarga el PDF y lo manda a imprimir. */
   async print(): Promise<void> {
     if (this.isPrinting()) return;
     this.isPrinting.set(true);
@@ -104,30 +104,60 @@ export class PdfViewerComponent implements OnDestroy {
       // Drive responde application/octet-stream; hay que re-etiquetar el blob
       // para que el visor nativo del navegador lo renderice dentro del iframe.
       const blob = new Blob([bytes], { type: 'application/pdf' });
-      this.release();
-      this.blobUrl = URL.createObjectURL(blob);
 
-      const frame = document.createElement('iframe');
-      // Invisible pero con layout: con display:none el visor de PDF no carga.
-      frame.setAttribute('style', 'position:absolute;width:0;height:0;border:0;visibility:hidden');
-      frame.src = this.blobUrl;
-      frame.onload = () => {
-        this.isPrinting.set(false);
-        try {
-          frame.contentWindow!.focus();
-          frame.contentWindow!.print();
-        } catch {
-          // Safari no permite imprimir un PDF embebido: abrirlo aparte.
-          if (!window.open(this.blobUrl!, '_blank')) this.printError.set(true);
-        }
-      };
-      document.body.appendChild(frame);
-      this.frame = frame;
+      if (await this.shareToSystem(blob)) return;
+      this.printViaFrame(blob);
     } catch (e) {
       console.error('No se pudo imprimir:', e);
       this.isPrinting.set(false);
       this.printError.set(true);
     }
+  }
+
+  /**
+   * En movil ningun navegador renderiza un PDF dentro de un iframe, asi que
+   * print() no tiene a que apuntar. La via nativa es la hoja de compartir del
+   * sistema, que lleva "Imprimir" entre sus destinos.
+   * Devuelve true si se hizo cargo; false para seguir con el iframe.
+   */
+  private async shareToSystem(blob: Blob): Promise<boolean> {
+    if (!matchMedia('(pointer: coarse)').matches) return false;
+
+    const name = this.target().title.replace(/\//g, '-');
+    const file = new File([blob], `${name}.pdf`, { type: 'application/pdf' });
+    if (!navigator.canShare?.({ files: [file] })) return false;
+
+    try {
+      await navigator.share({ files: [file] });
+    } catch (e) {
+      // La descarga pudo agotar la activacion de usuario que exige share():
+      // en ese caso volvemos al iframe. Si solo cancelo, no hay nada que hacer.
+      if ((e as Error).name !== 'AbortError') return false;
+    }
+    this.isPrinting.set(false);
+    return true;
+  }
+
+  private printViaFrame(blob: Blob): void {
+    this.release();
+    this.blobUrl = URL.createObjectURL(blob);
+
+    const frame = document.createElement('iframe');
+    // Invisible pero con layout: con display:none el visor de PDF no carga.
+    frame.setAttribute('style', 'position:absolute;width:0;height:0;border:0;visibility:hidden');
+    frame.src = this.blobUrl;
+    frame.onload = () => {
+      this.isPrinting.set(false);
+      try {
+        frame.contentWindow!.focus();
+        frame.contentWindow!.print();
+      } catch {
+        // Safari no permite imprimir un PDF embebido: abrirlo aparte.
+        if (!window.open(this.blobUrl!, '_blank')) this.printError.set(true);
+      }
+    };
+    document.body.appendChild(frame);
+    this.frame = frame;
   }
 
   private release(): void {

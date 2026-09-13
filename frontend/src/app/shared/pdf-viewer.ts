@@ -138,12 +138,19 @@ export class PdfViewerComponent implements OnDestroy {
     const host = document.createElement('div');
     host.id = 'pdf-print';
     const urls: string[] = [];
+    const pageStyle = document.createElement('style');
     const loaded: Promise<unknown>[] = [];
 
     try {
       for (let n = 1; n <= pdf.numPages; n++) {
         const page = await pdf.getPage(n);
         const viewport = page.getViewport({ scale: PRINT_SCALE });
+        if (n === 1) {
+          // La hoja adopta el tamano original del PDF; si no, un A4 sobre papel
+          // Letter se desborda y cada pagina se parte en dos.
+          const { width: w, height: h } = page.getViewport({ scale: 1 });
+          pageStyle.textContent = `@page { size: ${w}pt ${h}pt; margin: 0 }`;
+        }
         const canvas = document.createElement('canvas');
         canvas.width = viewport.width;
         canvas.height = viewport.height;
@@ -168,11 +175,13 @@ export class PdfViewerComponent implements OnDestroy {
       task.destroy();
     }
 
+    document.head.appendChild(pageStyle);
     document.body.appendChild(host);
     // Sin esperar la carga, print() puede disparar con las imagenes en blanco.
     await Promise.all(loaded);
     addEventListener('afterprint', () => {
       host.remove();
+      pageStyle.remove();
       urls.forEach(URL.revokeObjectURL);
     }, { once: true });
     print();
